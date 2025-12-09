@@ -403,6 +403,8 @@ app.post('/api/orders/reserve', requireAuth, async (req, res) => {
 
 // Health
 app.get('/api/health', (req, res) => res.json({ ok:true }))
+// Root health for platform checks
+app.get('/', (req, res) => res.status(200).send('OK'))
 
 // Dev helper: get last OTP for a phone
 app.get('/api/debug/otp', (req, res) => {
@@ -439,8 +441,21 @@ async function init() {
   }
 }
 
-init().then(()=>{
-  app.listen(PORT, () => {
-    console.log(`API server listening on http://localhost:${PORT}`)
+let initialized = false
+async function ensureInit(req, res, next) {
+  if (!initialized) {
+    try { await init(); initialized = true } catch (err) { /* ignore */ }
+  }
+  next()
+}
+app.use(ensureInit)
+
+export default app
+
+if (!process.env.VERCEL) {
+  init().then(()=>{
+    app.listen(PORT, () => {
+      console.log(`API server listening on http://localhost:${PORT}`)
+    })
   })
-})
+}
