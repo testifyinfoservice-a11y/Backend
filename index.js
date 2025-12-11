@@ -242,7 +242,8 @@ app.post('/api/auth/login', async (req, res) => {
   if (!ok) return res.status(401).json({ message:'Invalid credentials' })
   if (u.role === 'provider' && u.status !== 'active') return res.status(403).json({ message:'Awaiting admin approval' })
   const token = jwt.sign({ sub: u.id, role: u.role, email: u.email }, JWT_SECRET, { expiresIn: '7d' })
-  res.cookie('auth', token, { httpOnly: true, sameSite: 'lax', secure: false, maxAge: 7*24*60*60*1000 })
+  const isProd = !!process.env.VERCEL || process.env.NODE_ENV === 'production'
+  res.cookie('auth', token, { httpOnly: true, sameSite: isProd ? 'none' : 'lax', secure: isProd, maxAge: 7*24*60*60*1000 })
   res.json({ ok:true, role: u.role })
 })
 
