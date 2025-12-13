@@ -17,12 +17,13 @@ dotenv.config({ path: path.join(__dirname, '.env.example') })
 const app = express()
 app.use(express.json())
 app.use(cookieParser())
-const ALLOW_ORIGINS = (process.env.ALLOW_ORIGINS || '').split(',').filter(Boolean)
+const ALLOW_ORIGINS = (process.env.ALLOW_ORIGINS || '').split(',').map(s=>s.trim().replace(/\/+$/,'')).filter(Boolean)
 const ALLOW_VERCEL_ORIGINS = String(process.env.ALLOW_VERCEL_ORIGINS || '').toLowerCase() === 'true'
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true)
-    if (ALLOW_ORIGINS.length && ALLOW_ORIGINS.includes(origin)) return callback(null, true)
+    const o = String(origin).trim().replace(/\/+$/,'')
+    if (ALLOW_ORIGINS.length && ALLOW_ORIGINS.includes(o)) return callback(null, true)
     if (ALLOW_VERCEL_ORIGINS && /^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(origin)) return callback(null, true)
     if (/^http:\/\/localhost:\d+$/.test(origin)) return callback(null, true)
     return callback(null, false)
